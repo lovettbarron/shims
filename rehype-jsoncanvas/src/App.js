@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import { rehypeJsonCanvas } from "rehype-jsoncanvas";
+import rehypeJsonCanvas from "rehype-jsoncanvas";
 
 function App() {
   console.log("Content", example);
