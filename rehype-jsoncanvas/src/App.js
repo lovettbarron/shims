@@ -1,9 +1,11 @@
 import "./App.css";
+import example from "rehype-jsoncanvas/example/base.md";
+
 import React, { useState, useEffect } from "react";
 
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import example from "../node_modules/rehype-jsoncanvas/example/base.md";
+import { rehypeJsonCanvas } from "rehype-jsoncanvas";
 
 function App() {
   console.log("Content", example);
@@ -18,7 +20,9 @@ function App() {
 
   return (
     <div className="App">
-      <ReactMarkdown rehypePlugins={[rehypeRaw]}>{markdown}</ReactMarkdown>
+      <ReactMarkdown rehypePlugins={[rehypeRaw, rehypeJsonCanvas]}>
+        {markdown}
+      </ReactMarkdown>
     </div>
   );
 }
