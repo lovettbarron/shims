@@ -1,5 +1,5 @@
 import "./App.css";
-import example from "rehype-jsoncanvas/example/base.md";
+import example from "./base.md";
 
 import React, { useState, useEffect } from "react";
 
@@ -13,6 +13,7 @@ function App() {
   const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
+    // setMarkdown(example);
     fetch(example)
       .then((res) => res.text())
       .then((text) => setMarkdown(text));
