@@ -1,9 +1,10 @@
 import type { Plugin } from "unified";
-import type { ElementContent, Root } from "hast";
+import type { Element, ElementContent, Root } from "hast";
 import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
 import { visit } from "unist-util-visit";
-// import fs from "fs";
+import fs from "fs";
 import { validate, render } from "./jsoncanvas";
+import JSONCanvas from "@trbn/jsoncanvas";
 
 /*
 
@@ -27,43 +28,71 @@ Things decide:
 */
 
 export const rehypeJsonCanvas: Plugin<[], Root> = () => {
-  return (tree) => {
-    visit(tree, "element", (node, index, pre) => {
-      console.log(node, index, pre);
+  return async (tree) => {
+    const nodesToReplace = [] as Array<Element>;
+
+    // Iterate over the markdown file as tree
+    visit(tree, "element", (node, index) => {
+      // console.log(node, index, pre);
 
       // only match image embeds
-      if (node.tagName !== "img" || index === undefined) {
+      if (
+        node.tagName !== "img" ||
+        index === undefined ||
+        node.properties.src === undefined
+      ) {
         return;
       }
 
-      // const nodeData = node.data ajec t;
-      const canvasPath = "jsoncanvas";
-      const webcheck = canvasPath.trim().toLowerCase();
+      index = index += 1;
+    });
 
-      const canvasMarkdown = "JSONCANVASTEST";
-      if (webcheck.startsWith("https://")) {
-        // Fetch
-      } else {
-        // readfile
-      }
+    for (const node of nodesToReplace) {
+      const canvasPath = node.properties.src as string;
+      console.log("Detected", canvasPath);
+      let canvasMarkdown = await getCanvasFromEmbed(canvasPath);
+
+      console.log("Got markdown", canvasMarkdown);
+      const jsonCanvasFromString = JSONCanvas.fromString(canvasMarkdown);
 
       let canvas;
 
-      if (validate(canvasMarkdown)) {
-        canvas = render(canvasMarkdown, {});
+      if (validate(jsonCanvasFromString)) {
+        canvas = render(jsonCanvasFromString, {});
       } else {
         canvas = "<div>Not a properly formatted JsonCanvas</div>";
       }
 
-      const canvasHast = fromHtmlIsomorphic(canvas, {
+      console.log(canvas);
+
+      const canvasHast = fromHtmlIsomorphic(`<img alt='' src='${canvas}' />`, {
         fragment: true,
       });
       node.properties = {
         ...node.properties,
       };
-      node.tagName = "div";
+      node.tagName = "canvas";
       node.children = canvasHast.children as ElementContent[];
-      index += 1;
-    });
+    }
   };
 };
+
+async function getCanvasFromEmbed(path: string): Promise<string> {
+  let canvasMarkdown = "Loading";
+  const webcheck = path.trim().toLowerCase();
+
+  if (webcheck.startsWith("https://") || typeof window !== "undefined") {
+    await fetch(path)
+      .then((res) => res.text())
+      .then((text) => (canvasMarkdown = text));
+  } else {
+    // To accomodate ssr
+    canvasMarkdown = fs.readFileSync(path, {
+      encoding: "utf8",
+      flag: "r",
+    });
+  }
+  if (canvasMarkdown === null) return "";
+
+  return canvasMarkdown;
+}
