@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeJsonCanvas from "rehype-jsoncanvas";
 import remarkGfm from "remark-gfm";
-
+import remarkRehype from "remark-rehype";
 import { unified } from "unified";
 import parser from "remark-parse";
 import mdast2hast from "remark-rehype";
@@ -22,8 +22,6 @@ const production = {
 };
 
 function App() {
-  console.log("Content", example);
-
   const [markdown, setMarkdown] = useState("");
 
   useEffect(() => {
@@ -33,20 +31,18 @@ function App() {
       .then(async (text) => setMarkdown(await renderMarkdown(text)));
 
     async function renderMarkdown(markdown) {
-      console.log(markdown);
       const md = await unified()
         .use(parser)
         .use(mdast2hast)
         .use(remarkGfm)
+        .use(remarkRehype)
         .use(rehypeJsonCanvas)
         .use(compiler, production)
         .process(markdown);
 
-      console.log(md);
       return md;
     }
   }, []);
-  console.log(markdown);
   return <div className="App">{markdown.result}</div>;
 }
 

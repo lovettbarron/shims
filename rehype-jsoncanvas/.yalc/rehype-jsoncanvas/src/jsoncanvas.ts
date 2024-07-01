@@ -10,7 +10,7 @@ export function render(jsc: JSONCanvas, options: object): String | null {
   console.log("render", jsc, options);
 
   // Init Canvas objects
-  const { canvas, ctx } = initRender("jsc", 800, 600);
+  const { canvas, ctx } = initRender("jsc", 1280, 960);
 
   if (canvas === null || ctx === null) return null;
 
@@ -59,11 +59,12 @@ function drawNode(
   node: GenericNode | any
 ) {
   ctx.beginPath();
-  ctx.rect(
+  ctx.roundRect(
     node.x + canvas.width / 2,
     node.y + canvas.height / 2,
     node.width,
-    node.height
+    node.height,
+    [5]
   );
   ctx.stroke();
   ctx.closePath();
@@ -118,5 +119,26 @@ function drawEdge(
     ctx.lineTo(endX, endY);
     ctx.stroke();
     ctx.closePath();
+
+    // Draw arrowhead
+    const headlen = 10; // length of head in pixels
+    const angle = Math.atan2(endY - startY, endX - startX);
+    ctx.beginPath();
+    ctx.moveTo(endX, endY);
+    ctx.lineTo(
+      endX - headlen * Math.cos(angle - Math.PI / 6),
+      endY - headlen * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.lineTo(
+      endX - headlen * Math.cos(angle + Math.PI / 6),
+      endY - headlen * Math.sin(angle + Math.PI / 6)
+    );
+    ctx.lineTo(endX, endY);
+    ctx.lineTo(
+      endX - headlen * Math.cos(angle - Math.PI / 6),
+      endY - headlen * Math.sin(angle - Math.PI / 6)
+    );
+    ctx.stroke();
+    ctx.fill();
   }
 }

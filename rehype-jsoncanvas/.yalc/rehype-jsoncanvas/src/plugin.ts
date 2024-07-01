@@ -33,18 +33,15 @@ export const rehypeJsonCanvas: Plugin<[], Root> = () => {
 
     // Iterate over the markdown file as tree
     visit(tree, "element", (node, index) => {
-      // console.log(node, index, pre);
+      console.log(node, index);
 
       // only match image embeds
-      if (
-        node.tagName !== "img" ||
-        index === undefined ||
-        node.properties.src === undefined
-      ) {
+      if (node.tagName !== "img" || index === undefined) {
         return;
       }
-
-      index = index += 1;
+      console.log("Adding", node);
+      nodesToReplace.push(node);
+      // index = index += 1;
     });
 
     for (const node of nodesToReplace) {
@@ -71,7 +68,7 @@ export const rehypeJsonCanvas: Plugin<[], Root> = () => {
       node.properties = {
         ...node.properties,
       };
-      node.tagName = "canvas";
+      node.tagName = "div";
       node.children = canvasHast.children as ElementContent[];
     }
   };
