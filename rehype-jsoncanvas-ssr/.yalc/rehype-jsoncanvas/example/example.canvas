@@ -85,13 +85,6 @@
       "fromSide": "bottom",
       "toNode": "61ed4f3ea922e776",
       "toSide": "top"
-    },
-      {
-      "id": "e8835375931565da",
-      "fromNode": "61ed4f3ea922e776",
-      "fromSide": "left",
-      "toNode": "8697225338d5c533",
-      "toSide": "bottom"
     }
   ],
   "metadata": {}
