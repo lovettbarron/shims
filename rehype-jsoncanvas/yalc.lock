@@ -2,7 +2,7 @@
   "version": "v1",
   "packages": {
     "rehype-jsoncanvas": {
-      "signature": "52cd461f48a95a360641edbee2116596",
+      "signature": "efa513276d51632b695e48024768d577",
       "file": true,
       "replaced": "file:../../rehype-jsoncanvas"
     }

@@ -8,6 +8,7 @@ import parser from "remark-parse";
 import mdast2hast from "remark-rehype";
 import compiler from "rehype-react";
 import rehypeStringify from "rehype-stringify";
+import rehypeJsonCanvas from "rehype-jsoncanvas";
 
 async function renderMarkdown(markdown: string) {
   const md = await unified()
@@ -15,7 +16,7 @@ async function renderMarkdown(markdown: string) {
     .use(mdast2hast)
     .use(remarkGfm)
     .use(remarkRehype)
-    // .use(rehypeJsonCanvas)
+    .use(rehypeJsonCanvas)
     .use(rehypeStringify)
     .processSync(markdown);
 
