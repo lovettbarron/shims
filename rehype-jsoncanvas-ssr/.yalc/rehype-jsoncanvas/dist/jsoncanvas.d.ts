@@ -1,4 +1,5 @@
-import { JSONCanvas } from "@trbn/jsoncanvas";
-import { Options } from "./options";
+import type { Element } from "hast";
+import type { JSONCanvas } from "@trbn/jsoncanvas";
+import { type Options } from "./options";
 export declare function validate(jsonCanvasData: JSONCanvas): boolean;
-export declare function render(jsc: JSONCanvas, config?: Partial<Options>): String | any | null;
+export declare function render(jsc: JSONCanvas, config?: Partial<Options>): Element | null;

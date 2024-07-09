@@ -1,5 +1,5 @@
-import { Element } from "hast";
-import { GenericNode } from "@trbn/jsoncanvas";
-export declare function checkImagesLoaded(callback: Function): any;
-export declare function drawEmbedded(svg: Element, node: GenericNode | any): Promise<void>;
-export declare function drawMarkdownEmbed(svg: Element, node: GenericNode | any): Promise<void>;
+import type { Element } from "hast";
+import type { GenericNode } from "@trbn/jsoncanvas";
+import { type Options } from "./options";
+export declare function drawEmbedded(svg: Element, grp: Element, node: GenericNode | any, config?: Partial<Options>): Promise<void>;
+export declare function drawMarkdownEmbed(svg: Element, grp: Element, node: GenericNode | any, config?: Partial<Options>): Promise<void>;

@@ -1,11 +1,14 @@
-import type { Plugin } from "unified";
-import type { Element, ElementContent, Root } from "hast";
-import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
-import { visit } from "unist-util-visit";
-import fs from "fs";
-import { validate, render } from "./jsoncanvas";
+import fs from "node:fs";
+import path from "node:path";
 import JSONCanvas from "@trbn/jsoncanvas";
+import type { Element, Root } from "hast";
+import { h } from "hastscript";
+import type { Plugin } from "unified";
+// import { fromHtmlIsomorphic } from "hast-util-from-html-isomorphic";
+import { visit } from "unist-util-visit";
+import { render, validate } from "./jsoncanvas";
 
+import { type Options, applyDefaults } from "./options";
 /*
 
 Let's think this through.
@@ -27,70 +30,94 @@ Things decide:
 
 */
 
-export const rehypeJsonCanvas: Plugin<[], Root> = () => {
+export const rehypeJsonCanvas: Plugin<[(Options | undefined)?], Root> = (
+  config?: Partial<Options>
+) => {
   return async (tree) => {
     const nodesToReplace = [] as Array<Element>;
 
     // Iterate over the markdown file as tree
     visit(tree, "element", (node, index) => {
-      console.log(node, index);
-
       // only match image embeds
       if (node.tagName !== "img" || index === undefined) {
         return;
       }
-      console.log("Adding", node);
+
+      // This makes sure that the file in the image tag is a canvas
+      const canvasCheck = node.properties.src as string;
+      if (!canvasCheck.includes(".canvas")) return;
+
       nodesToReplace.push(node);
       // index = index += 1;
     });
 
     for (const node of nodesToReplace) {
       const canvasPath = node.properties.src as string;
-      console.log("Detected", canvasPath);
-      let canvasMarkdown = await getCanvasFromEmbed(canvasPath);
+      const canvasMarkdown = await getCanvasFromEmbed(canvasPath, config);
 
-      console.log("Got markdown", canvasMarkdown);
+      if (canvasMarkdown.length < 1) return;
       const jsonCanvasFromString = JSONCanvas.fromString(canvasMarkdown);
 
-      let canvas;
+      let canvas = null;
 
       if (validate(jsonCanvasFromString)) {
-        canvas = render(jsonCanvasFromString, {});
+        canvas = render(jsonCanvasFromString, config);
       } else {
-        canvas = "<div>Not a properly formatted JsonCanvas</div>";
+        canvas = h("div", "Not a properly formatted JsonCanvas");
       }
 
-      console.log(canvas);
-
-      const canvasHast = fromHtmlIsomorphic(
-        `<img alt='' src='${canvas}' style='width:100%' />`,
-        {
-          fragment: true,
-        }
-      );
+      if (!canvas) return;
       node.properties = {
         ...node.properties,
       };
       node.tagName = "div";
-      node.children = canvasHast.children as ElementContent[];
+      node.children = [];
+      node.children.push(canvas);
     }
   };
 };
 
-async function getCanvasFromEmbed(path: string): Promise<string> {
-  let canvasMarkdown = "Loading";
-  const webcheck = path.trim().toLowerCase();
+export async function getCanvasFromEmbed(
+  markdownPath: string,
+  config?: Partial<Options>
+): Promise<string> {
+  const options = applyDefaults(config);
+  let canvasMarkdown = "";
+  const webcheck = markdownPath.trim().toLowerCase();
+
+  // https://stackoverflow.com/questions/190852/how-can-i-get-file-extensions-with-javascript/12900504#12900504
+  const extension = webcheck.slice(
+    (Math.max(0, webcheck.lastIndexOf(".")) || Number.POSITIVE_INFINITY) + 1
+  );
 
   if (webcheck.startsWith("https://") || typeof window !== "undefined") {
-    await fetch(path)
+    await fetch(markdownPath)
       .then((res) => res.text())
-      .then((text) => (canvasMarkdown = text));
+      .then((text) => {
+        canvasMarkdown = text;
+      });
+  } else if (options.ssrPath !== undefined) {
+    let pathArr = [process.cwd()];
+
+    if (options.ssrPath && extension !== "md") pathArr.push(options.ssrPath);
+    if (extension === "md" && options.mdPath) pathArr.push(options.mdPath);
+
+    pathArr.push(markdownPath);
+
+    const ssrPath = path.join(...pathArr);
+
+    try {
+      canvasMarkdown = fs.readFileSync(ssrPath, {
+        encoding: "utf8",
+        flag: "r",
+      });
+    } catch (err) {
+      console.log("No Canvas File Found. Try using the assetPath option!", err);
+    }
   } else {
-    // To accomodate ssr
-    canvasMarkdown = fs.readFileSync(path, {
-      encoding: "utf8",
-      flag: "r",
-    });
+    console.log(
+      "If you're running this plugin via serverside renering, you'll need to define an ssrPath relative to your project file. Take a look at the readme or nextjs project for examples."
+    );
   }
   if (canvasMarkdown === null) return "";
 
